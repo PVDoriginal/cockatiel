@@ -356,7 +356,7 @@ pub trait AnimatorTag: 'static + Send + Sync {
   }
 }
 
-#[derive(Event)]
+#[derive(Message, Event)]
 pub struct AnimationEvent<E: AnimationEventPayload> {
   pub entity: Entity,
   pub event: E,
@@ -525,7 +525,7 @@ pub fn execute_animations<Tag: AnimatorTag, Anim: Animatable>(
     &mut Anim,
     Option<&LookDirection>,
   )>,
-  mut event_writer: EventWriter<AnimationEvent<Tag::Event>>,
+  mut event_writer: MessageWriter<AnimationEvent<Tag::Event>>,
 ) {
   for (entity, mut animator, mut animatable, look_dir) in &mut query {
     // Rotate the sprite based on look direction
