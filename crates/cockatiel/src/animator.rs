@@ -27,7 +27,7 @@ impl<Tag: AnimatorTag> Plugin for AnimatorPlugin<Tag> {
         )
           .chain(),
       )
-      .add_event::<AnimationEvent<Tag::Event>>();
+      .add_message::<AnimationEvent<Tag::Event>>();
   }
 }
 
@@ -356,7 +356,7 @@ pub trait AnimatorTag: 'static + Send + Sync {
   }
 }
 
-#[derive(Message, Event)]
+#[derive(Message)]
 pub struct AnimationEvent<E: AnimationEventPayload> {
   pub entity: Entity,
   pub event: E,
