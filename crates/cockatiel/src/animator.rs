@@ -120,9 +120,9 @@ impl<E: AnimationEventPayload> Animation<E> {
     }
   }
 
-  pub fn flip_x(&self, direction: Option<&LookDirection>) -> bool {
+  pub fn flip_x(&self, direction: &LookDirection) -> bool {
     match (self, direction) {
-      (Animation::BiDirectional { up: _, down: _ }, Some(direction)) => match direction {
+      (Animation::BiDirectional { up: _, down: _ }, direction) => match direction {
         LookDirection::UpRight | LookDirection::DownRight => false,
         LookDirection::DownLeft | LookDirection::UpLeft => true,
       },
@@ -529,8 +529,12 @@ pub fn execute_animations<Tag: AnimatorTag, Anim: Animatable>(
 ) {
   for (entity, mut animator, mut animatable, look_dir) in &mut query {
     // Rotate the sprite based on look direction
-    if let Some(animation) = animator.get_animation() {
-      animatable.set_flip_x(animation.flip_x(look_dir));
+    if_chain! {
+        if let Some(animation) = animator.get_animation();
+        if let Some(look_dir) = look_dir;
+        then {
+        animatable.set_flip_x(animation.flip_x(look_dir));
+      }
     }
 
     if let Some(atlas) = animatable.get_texture_atlas_mut() {
@@ -620,8 +624,9 @@ pub fn sync_animations<Tag: AnimatorTag, Anim: Animatable>(
       if let Some(animation) = target.animations.get(current_state);
       if let Some(frame_data) = animation.get(look_dir);
       if let Some(frame) = frame_data.frames.get(source.frame_index);
+      if let Some(look_dir) = look_dir;
       then {
-        animatable.set_flip_x( animation.flip_x(look_dir));
+        animatable.set_flip_x(animation.flip_x(look_dir));
         if let Some(atlas) = animatable.get_texture_atlas_mut() {
             atlas.index = frame.index;
         }
