@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use bevy_log::info;
 use hashbrown::HashMap;
 use if_chain::if_chain;
+use serde::{Deserialize, Serialize};
 use std::{ops::Range, time::Duration};
 #[derive(Default)]
 pub struct AnimatorPlugin<Tag: AnimatorTag> {
@@ -635,7 +636,7 @@ pub fn sync_animations<Tag: AnimatorTag, Anim: Animatable>(
   }
 }
 
-#[derive(Component, Default, Reflect, Debug)]
+#[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq, Reflect, Default)]
 pub enum LookDirection {
   UpRight,
   #[default]

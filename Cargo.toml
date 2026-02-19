@@ -3,11 +3,15 @@ resolver = "2"
 members = ["crates/*"]
 
 [workspace.dependencies]
-bevy = { version = "0.18", default-features = false, features = ["bevy_sprite", "bevy_ui"]}
+bevy = { version = "0.18", default-features = false, features = [
+    "bevy_sprite",
+    "bevy_ui",
+] }
 bevy_log = "0.18"
 
 if_chain = "1.0.2"
 hashbrown = { version = "0.16" }
+serde = { version = "1.0.228", features = ["derive"] }
 
 [profile.dev]
 opt-level = 1
