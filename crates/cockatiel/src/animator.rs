@@ -750,7 +750,7 @@ impl From<Vec3> for LookDirection {
   }
 }
 impl LookDirection {
-  fn octagonal(value: Vec2) -> Self {
+  pub fn octagonal(value: Vec2) -> Self {
     let angle = value.y.atan2(value.x).rem_euclid(std::f32::consts::TAU);
     let index = (angle / std::f32::consts::FRAC_PI_4 + 0.5) as usize % 8;
     match index {
