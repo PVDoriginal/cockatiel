@@ -87,14 +87,14 @@ pub enum Animation<E: AnimationEventPayload> {
     down: FrameData<E>,
   },
   Octagonal {
-    up: FrameData<E>,
-    up_right: FrameData<E>,
     right: FrameData<E>,
-    down_right: FrameData<E>,
-    down: FrameData<E>,
-    down_left: FrameData<E>,
-    left: FrameData<E>,
+    up_right: FrameData<E>,
+    up: FrameData<E>,
     up_left: FrameData<E>,
+    left: FrameData<E>,
+    down_left: FrameData<E>,
+    down: FrameData<E>,
+    down_right: FrameData<E>,
   },
 }
 impl<E: AnimationEventPayload> Animation<E> {
@@ -107,24 +107,24 @@ impl<E: AnimationEventPayload> Animation<E> {
   }
   #[allow(clippy::too_many_arguments)]
   pub fn octagonal(
-    up: FrameData<E>,
-    up_right: FrameData<E>,
     right: FrameData<E>,
-    down_right: FrameData<E>,
-    down: FrameData<E>,
-    down_left: FrameData<E>,
-    left: FrameData<E>,
+    up_right: FrameData<E>,
+    up: FrameData<E>,
     up_left: FrameData<E>,
+    left: FrameData<E>,
+    down_left: FrameData<E>,
+    down: FrameData<E>,
+    down_right: FrameData<E>,
   ) -> Self {
     Self::Octagonal {
-      up,
-      up_right,
       right,
-      down_right,
-      down,
-      down_left,
-      left,
+      up_right,
+      up,
       up_left,
+      left,
+      down_left,
+      down,
+      down_right,
     }
   }
 
@@ -174,32 +174,32 @@ impl<E: AnimationEventPayload> Animation<E> {
         Self::BiDirectional { up, down }
       }
       Self::Octagonal {
-        mut up,
-        mut up_right,
         mut right,
-        mut down_right,
-        mut down,
-        mut down_left,
-        mut left,
+        mut up_right,
+        mut up,
         mut up_left,
+        mut left,
+        mut down_left,
+        mut down,
+        mut down_right,
       } => {
-        up.frames[index].event = Some(event.clone());
-        up_right.frames[index].event = Some(event.clone());
         right.frames[index].event = Some(event.clone());
-        down_right.frames[index].event = Some(event.clone());
-        down.frames[index].event = Some(event.clone());
-        down_left.frames[index].event = Some(event.clone());
+        up_right.frames[index].event = Some(event.clone());
+        up.frames[index].event = Some(event.clone());
+        up_left.frames[index].event = Some(event.clone());
         left.frames[index].event = Some(event.clone());
-        up_left.frames[index].event = Some(event);
+        down_left.frames[index].event = Some(event.clone());
+        down.frames[index].event = Some(event.clone());
+        down_right.frames[index].event = Some(event);
         Self::Octagonal {
-          up,
-          up_right,
           right,
-          down_right,
-          down,
-          down_left,
-          left,
+          up_right,
+          up,
           up_left,
+          left,
+          down_left,
+          down,
+          down_right,
         }
       }
     }
