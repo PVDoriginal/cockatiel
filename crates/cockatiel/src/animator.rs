@@ -723,15 +723,15 @@ pub fn sync_animations<Tag: AnimatorTag, Anim: Animatable>(
 
 #[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq, Reflect, Default)]
 pub enum LookDirection {
-  Up,
-  UpRight,
   Right,
+  UpRight,
+  Up,
+  UpLeft,
+  Left,
+  DownLeft,
+  Down,
   #[default]
   DownRight,
-  Down,
-  DownLeft,
-  Left,
-  UpLeft,
 }
 impl From<Vec2> for LookDirection {
   fn from(value: Vec2) -> Self {
