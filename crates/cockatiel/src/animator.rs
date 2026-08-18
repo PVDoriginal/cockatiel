@@ -5,6 +5,7 @@ use hashbrown::HashMap;
 use if_chain::if_chain;
 use serde::{Deserialize, Serialize};
 use std::{ops::Range, time::Duration};
+
 #[derive(Default)]
 pub struct AnimatorPlugin<Tag: AnimatorTag> {
   _marker: std::marker::PhantomData<Tag>,
@@ -85,8 +86,17 @@ pub enum Animation<E: AnimationEventPayload> {
     up: FrameData<E>,
     down: FrameData<E>,
   },
+  Octagonal {
+    up: FrameData<E>,
+    up_right: FrameData<E>,
+    right: FrameData<E>,
+    down_right: FrameData<E>,
+    down: FrameData<E>,
+    down_left: FrameData<E>,
+    left: FrameData<E>,
+    up_left: FrameData<E>,
+  },
 }
-
 impl<E: AnimationEventPayload> Animation<E> {
   #[allow(dead_code)]
   pub fn non_directional(animation: FrameData<E>) -> Self {
@@ -95,6 +105,28 @@ impl<E: AnimationEventPayload> Animation<E> {
   pub fn bi_directional(up: FrameData<E>, down: FrameData<E>) -> Self {
     Self::BiDirectional { up, down }
   }
+  #[allow(clippy::too_many_arguments)]
+  pub fn octagonal(
+    up: FrameData<E>,
+    up_right: FrameData<E>,
+    right: FrameData<E>,
+    down_right: FrameData<E>,
+    down: FrameData<E>,
+    down_left: FrameData<E>,
+    left: FrameData<E>,
+    up_left: FrameData<E>,
+  ) -> Self {
+    Self::Octagonal {
+      up,
+      up_right,
+      right,
+      down_right,
+      down,
+      down_left,
+      left,
+      up_left,
+    }
+  }
 
   fn get(&self, direction: Option<&LookDirection>) -> Option<&FrameData<E>> {
     match (self, direction) {
@@ -102,6 +134,29 @@ impl<E: AnimationEventPayload> Animation<E> {
       (Animation::BiDirectional { up, down }, Some(direction)) => match direction {
         LookDirection::UpLeft | LookDirection::UpRight => Some(up),
         LookDirection::DownLeft | LookDirection::DownRight => Some(down),
+        _ => None,
+      },
+      (
+        Animation::Octagonal {
+          up,
+          up_right,
+          right,
+          down_right,
+          down,
+          down_left,
+          left,
+          up_left,
+        },
+        Some(direction),
+      ) => match direction {
+        LookDirection::Up => Some(up),
+        LookDirection::UpRight => Some(up_right),
+        LookDirection::Right => Some(right),
+        LookDirection::DownRight => Some(down_right),
+        LookDirection::Down => Some(down),
+        LookDirection::DownLeft => Some(down_left),
+        LookDirection::Left => Some(left),
+        LookDirection::UpLeft => Some(up_left),
       },
       (_, _) => None,
     }
@@ -118,6 +173,35 @@ impl<E: AnimationEventPayload> Animation<E> {
         down.frames[index].event = Some(event);
         Self::BiDirectional { up, down }
       }
+      Self::Octagonal {
+        mut up,
+        mut up_right,
+        mut right,
+        mut down_right,
+        mut down,
+        mut down_left,
+        mut left,
+        mut up_left,
+      } => {
+        up.frames[index].event = Some(event.clone());
+        up_right.frames[index].event = Some(event.clone());
+        right.frames[index].event = Some(event.clone());
+        down_right.frames[index].event = Some(event.clone());
+        down.frames[index].event = Some(event.clone());
+        down_left.frames[index].event = Some(event.clone());
+        left.frames[index].event = Some(event.clone());
+        up_left.frames[index].event = Some(event);
+        Self::Octagonal {
+          up,
+          up_right,
+          right,
+          down_right,
+          down,
+          down_left,
+          left,
+          up_left,
+        }
+      }
     }
   }
 
@@ -126,6 +210,7 @@ impl<E: AnimationEventPayload> Animation<E> {
       (Animation::BiDirectional { up: _, down: _ }, direction) => match direction {
         LookDirection::UpRight | LookDirection::DownRight => false,
         LookDirection::DownLeft | LookDirection::UpLeft => true,
+        _ => false,
       },
       (_, _) => false,
     }
@@ -638,10 +723,14 @@ pub fn sync_animations<Tag: AnimatorTag, Anim: Animatable>(
 
 #[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq, Reflect, Default)]
 pub enum LookDirection {
+  Up,
   UpRight,
+  Right,
   #[default]
   DownRight,
+  Down,
   DownLeft,
+  Left,
   UpLeft,
 }
 impl From<Vec2> for LookDirection {
@@ -658,5 +747,22 @@ impl From<Vec2> for LookDirection {
 impl From<Vec3> for LookDirection {
   fn from(value: Vec3) -> Self {
     Self::from(value.truncate())
+  }
+}
+impl LookDirection {
+  fn octagonal(value: Vec2) -> Self {
+    let angle = value.y.atan2(value.x).rem_euclid(std::f32::consts::TAU);
+    let index = (angle / std::f32::consts::FRAC_PI_4 + 0.5) as usize % 8;
+    match index {
+      0 => LookDirection::Right,
+      1 => LookDirection::UpRight,
+      2 => LookDirection::Up,
+      3 => LookDirection::UpLeft,
+      4 => LookDirection::Left,
+      5 => LookDirection::DownLeft,
+      6 => LookDirection::Down,
+      7 => LookDirection::DownRight,
+      _ => unreachable!(),
+    }
   }
 }
