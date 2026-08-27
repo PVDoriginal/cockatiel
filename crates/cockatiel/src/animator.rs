@@ -110,11 +110,11 @@ pub enum Animation<E: AnimationEventPayload> {
     down_right: FrameData<E>,
   },
   OctagonalFlip {
-    down: FrameData<E>,
-    down_right: FrameData<E>,
-    right: FrameData<E>,
-    up_right: FrameData<E>,
     up: FrameData<E>,
+    up_right: FrameData<E>,
+    right: FrameData<E>,
+    down_right: FrameData<E>,
+    down: FrameData<E>,
   },
 }
 impl<E: AnimationEventPayload> Animation<E> {
@@ -148,18 +148,18 @@ impl<E: AnimationEventPayload> Animation<E> {
     }
   }
   pub fn octagonal_flip(
-    down: FrameData<E>,
-    down_right: FrameData<E>,
-    right: FrameData<E>,
-    up_right: FrameData<E>,
     up: FrameData<E>,
+    up_right: FrameData<E>,
+    right: FrameData<E>,
+    down_right: FrameData<E>,
+    down: FrameData<E>,
   ) -> Self {
     Self::OctagonalFlip {
-      down,
-      down_right,
-      right,
-      up_right,
       up,
+      up_right,
+      right,
+      down_right,
+      down,
     }
   }
 
@@ -195,11 +195,11 @@ impl<E: AnimationEventPayload> Animation<E> {
       },
       (
         Animation::OctagonalFlip {
-          down,
-          down_right,
-          right,
-          up_right,
           up,
+          up_right,
+          right,
+          down_right,
+          down,
         },
         Some(direction),
       ) => match direction {
@@ -260,24 +260,24 @@ impl<E: AnimationEventPayload> Animation<E> {
         }
       }
       Self::OctagonalFlip {
-        mut down,
-        mut down_right,
-        mut right,
-        mut up_right,
         mut up,
+        mut up_right,
+        mut right,
+        mut down_right,
+        mut down,
       } => {
-        right.frames[index].event = Some(event.clone());
-        up_right.frames[index].event = Some(event.clone());
         up.frames[index].event = Some(event.clone());
-        down.frames[index].event = Some(event.clone());
-        down_right.frames[index].event = Some(event);
+        up_right.frames[index].event = Some(event.clone());
+        right.frames[index].event = Some(event.clone());
+        down_right.frames[index].event = Some(event.clone());
+        down.frames[index].event = Some(event);
 
         Self::OctagonalFlip {
-          down,
-          down_right,
-          right,
-          up_right,
           up,
+          up_right,
+          right,
+          down_right,
+          down,
         }
       }
     }
