@@ -709,15 +709,6 @@ pub fn execute_animations<Tag: AnimatorTag, Anim: Animatable>(
   mut event_writer: MessageWriter<AnimationEvent<Tag::Event>>,
 ) {
   for (entity, mut animator, mut animatable, look_dir) in &mut query {
-    // Rotate the sprite based on look direction
-    if_chain! {
-        if let Some(animation) = animator.get_animation();
-        if let Some(look_dir) = look_dir;
-        then {
-        animatable.set_flip_x(animation.flip_x(look_dir));
-      }
-    }
-
     if let Some(atlas) = animatable.get_texture_atlas_mut() {
       // Ticking the animator timer
       let speed = animator.get_speed();
@@ -750,12 +741,21 @@ pub fn execute_animations<Tag: AnimatorTag, Anim: Animatable>(
           animator.reset(atlas, &frame_data);
         }
 
-        // Update sprite to match the new frame
-        let frame = animator.next(&frame_data, direction);
-        atlas.index = frame.index;
-
         // Animator has finished the frame
         if has_frame_finished && (!is_last_frame || frame_data.loops) {
+          // Update sprite to match the new frame
+          let frame = animator.next(&frame_data, direction);
+          atlas.index = frame.index;
+
+          // Rotate the sprite based on look direction
+          if_chain! {
+              if let Some(animation) = animator.get_animation();
+              if let Some(look_dir) = look_dir;
+              then {
+              animatable.set_flip_x(animation.flip_x(look_dir));
+            }
+          }
+
           // If the new frame has an associated event, send it
           if let Some(ref event) = frame.event {
             let animator_event = AnimationEvent {
