@@ -77,6 +77,19 @@ impl<E: AnimationEventPayload> FrameData<E> {
 
     Self { frames, loops }
   }
+
+  pub fn push(&self, row_size: usize, amount: usize) -> Self {
+    let frames = self
+      .frames
+      .iter()
+      .map(|frame| Frame::new(frame.index + row_size * amount, frame.duration))
+      .collect();
+
+    Self {
+      frames,
+      loops: self.loops,
+    }
+  }
 }
 
 #[derive(Component, Debug, Reflect, Clone)]
