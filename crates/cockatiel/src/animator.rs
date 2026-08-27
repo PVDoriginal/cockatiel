@@ -82,7 +82,7 @@ impl<E: AnimationEventPayload> FrameData<E> {
 #[derive(Component, Debug, Reflect, Clone)]
 pub enum Animation<E: AnimationEventPayload> {
   NonDirectional(FrameData<E>),
-  BiDirectional {
+  DiagonalFlip {
     up: FrameData<E>,
     down: FrameData<E>,
   },
@@ -96,6 +96,13 @@ pub enum Animation<E: AnimationEventPayload> {
     down: FrameData<E>,
     down_right: FrameData<E>,
   },
+  OctagonalFlip {
+    down: FrameData<E>,
+    down_right: FrameData<E>,
+    right: FrameData<E>,
+    up_right: FrameData<E>,
+    up: FrameData<E>,
+  },
 }
 impl<E: AnimationEventPayload> Animation<E> {
   #[allow(dead_code)]
@@ -103,7 +110,7 @@ impl<E: AnimationEventPayload> Animation<E> {
     Self::NonDirectional(animation)
   }
   pub fn bi_directional(up: FrameData<E>, down: FrameData<E>) -> Self {
-    Self::BiDirectional { up, down }
+    Self::DiagonalFlip { up, down }
   }
   #[allow(clippy::too_many_arguments)]
   pub fn octagonal(
@@ -127,11 +134,26 @@ impl<E: AnimationEventPayload> Animation<E> {
       down_right,
     }
   }
+  pub fn octagonal_flip(
+    down: FrameData<E>,
+    down_right: FrameData<E>,
+    right: FrameData<E>,
+    up_right: FrameData<E>,
+    up: FrameData<E>,
+  ) -> Self {
+    Self::OctagonalFlip {
+      down,
+      down_right,
+      right,
+      up_right,
+      up,
+    }
+  }
 
   fn get(&self, direction: Option<&LookDirection>) -> Option<&FrameData<E>> {
     match (self, direction) {
       (Animation::NonDirectional(frame_data), _) => Some(frame_data),
-      (Animation::BiDirectional { up, down }, Some(direction)) => match direction {
+      (Animation::DiagonalFlip { up, down }, Some(direction)) => match direction {
         LookDirection::UpLeft | LookDirection::UpRight => Some(up),
         LookDirection::DownLeft | LookDirection::DownRight => Some(down),
         _ => None,
@@ -158,6 +180,25 @@ impl<E: AnimationEventPayload> Animation<E> {
         LookDirection::Down => Some(down),
         LookDirection::DownRight => Some(down_right),
       },
+      (
+        Animation::OctagonalFlip {
+          down,
+          down_right,
+          right,
+          up_right,
+          up,
+        },
+        Some(direction),
+      ) => match direction {
+        LookDirection::Right => Some(right),
+        LookDirection::UpRight => Some(up_right),
+        LookDirection::Up => Some(up),
+        LookDirection::UpLeft => Some(up_right),
+        LookDirection::Left => Some(right),
+        LookDirection::DownLeft => Some(down_right),
+        LookDirection::Down => Some(down),
+        LookDirection::DownRight => Some(down_right),
+      },
       (_, _) => None,
     }
   }
@@ -166,12 +207,14 @@ impl<E: AnimationEventPayload> Animation<E> {
     match self {
       Self::NonDirectional(mut framedata) => {
         framedata.frames[index].event = Some(event);
+
         Self::NonDirectional(framedata)
       }
-      Self::BiDirectional { mut up, mut down } => {
+      Self::DiagonalFlip { mut up, mut down } => {
         up.frames[index].event = Some(event.clone());
         down.frames[index].event = Some(event);
-        Self::BiDirectional { up, down }
+
+        Self::DiagonalFlip { up, down }
       }
       Self::Octagonal {
         mut right,
@@ -191,6 +234,7 @@ impl<E: AnimationEventPayload> Animation<E> {
         down_left.frames[index].event = Some(event.clone());
         down.frames[index].event = Some(event.clone());
         down_right.frames[index].event = Some(event);
+
         Self::Octagonal {
           right,
           up_right,
@@ -202,15 +246,53 @@ impl<E: AnimationEventPayload> Animation<E> {
           down_right,
         }
       }
+      Self::OctagonalFlip {
+        mut down,
+        mut down_right,
+        mut right,
+        mut up_right,
+        mut up,
+      } => {
+        right.frames[index].event = Some(event.clone());
+        up_right.frames[index].event = Some(event.clone());
+        up.frames[index].event = Some(event.clone());
+        down.frames[index].event = Some(event.clone());
+        down_right.frames[index].event = Some(event);
+
+        Self::OctagonalFlip {
+          down,
+          down_right,
+          right,
+          up_right,
+          up,
+        }
+      }
     }
   }
 
   pub fn flip_x(&self, direction: &LookDirection) -> bool {
     match (self, direction) {
-      (Animation::BiDirectional { up: _, down: _ }, direction) => match direction {
+      (Animation::DiagonalFlip { up: _, down: _ }, direction) => match direction {
         LookDirection::UpRight | LookDirection::DownRight => false,
         LookDirection::DownLeft | LookDirection::UpLeft => true,
         _ => false,
+      },
+      (
+        Animation::OctagonalFlip {
+          down: _,
+          down_right: _,
+          right: _,
+          up_right: _,
+          up: _,
+        },
+        direction,
+      ) => match direction {
+        LookDirection::Right
+        | LookDirection::UpRight
+        | LookDirection::Up
+        | LookDirection::Down
+        | LookDirection::DownRight => false,
+        LookDirection::UpLeft | LookDirection::Left | LookDirection::DownLeft => true,
       },
       (_, _) => false,
     }
