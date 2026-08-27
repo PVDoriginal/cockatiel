@@ -750,12 +750,12 @@ pub fn execute_animations<Tag: AnimatorTag, Anim: Animatable>(
           animator.reset(atlas, &frame_data);
         }
 
+        // Update sprite to match the new frame
+        let frame = animator.next(&frame_data, direction);
+        atlas.index = frame.index;
+
         // Animator has finished the frame
         if has_frame_finished && (!is_last_frame || frame_data.loops) {
-          // Update sprite to match the new frame
-          let frame = animator.next(&frame_data, direction);
-          atlas.index = frame.index;
-
           // If the new frame has an associated event, send it
           if let Some(ref event) = frame.event {
             let animator_event = AnimationEvent {
