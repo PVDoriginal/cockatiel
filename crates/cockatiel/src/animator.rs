@@ -4,7 +4,7 @@ use bevy_log::info;
 use hashbrown::HashMap;
 use if_chain::if_chain;
 use serde::{Deserialize, Serialize};
-use std::{ops::Range, time::Duration};
+use std::{f32::consts::PI, ops::Range, time::Duration};
 
 #[derive(Default)]
 pub struct AnimatorPlugin<Tag: AnimatorTag> {
@@ -857,6 +857,19 @@ impl LookDirection {
       LookDirection::DownRight => vec2(-1.0, -1.0),
     }
     .normalize()
+  }
+
+  pub fn to_rad(&self) -> f32 {
+    match self {
+      LookDirection::Right => 0.0,
+      LookDirection::UpRight => PI / 4.0,
+      LookDirection::Up => PI / 2.0,
+      LookDirection::UpLeft => 3.0 * PI / 4.0,
+      LookDirection::Left => PI,
+      LookDirection::DownLeft => 5.0 * PI / 4.0,
+      LookDirection::Down => 3.0 * PI / 2.0,
+      LookDirection::DownRight => 7.0 * PI / 4.0,
+    }
   }
 
   pub fn octagonal(value: Vec2) -> Self {
