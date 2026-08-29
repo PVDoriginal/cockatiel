@@ -845,6 +845,20 @@ impl From<Vec3> for LookDirection {
   }
 }
 impl LookDirection {
+  pub fn to_vec2(&self) -> Vec2 {
+    match self {
+      LookDirection::Right => vec2(1.0, 0.0),
+      LookDirection::UpRight => vec2(1.0, 1.0),
+      LookDirection::Up => vec2(0.0, 1.0),
+      LookDirection::UpLeft => vec2(-1.0, 1.0),
+      LookDirection::Left => vec2(-1.0, 0.0),
+      LookDirection::DownLeft => vec2(-1.0, -1.0),
+      LookDirection::Down => vec2(0.0, -1.0),
+      LookDirection::DownRight => vec2(-1.0, -1.0),
+    }
+    .normalize()
+  }
+
   pub fn octagonal(value: Vec2) -> Self {
     let angle = value.y.atan2(value.x).rem_euclid(std::f32::consts::TAU);
     let index = (angle / std::f32::consts::FRAC_PI_4 + 0.5) as usize % 8;
