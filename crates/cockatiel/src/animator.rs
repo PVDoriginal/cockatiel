@@ -854,7 +854,7 @@ impl LookDirection {
       LookDirection::Left => vec2(-1.0, 0.0),
       LookDirection::DownLeft => vec2(-1.0, -1.0),
       LookDirection::Down => vec2(0.0, -1.0),
-      LookDirection::DownRight => vec2(-1.0, -1.0),
+      LookDirection::DownRight => vec2(1.0, -1.0),
     }
     .normalize()
   }
