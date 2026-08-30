@@ -19,7 +19,8 @@ impl<Tag: AnimatorTag> Plugin for AnimatorPlugin<Tag> {
           execute_animations::<Tag, Sprite>,
           sync_animations::<Tag, Sprite>,
         )
-          .chain(),
+          .chain()
+          .in_set(AnimationSet),
       )
       .add_systems(
         Update,
@@ -27,11 +28,15 @@ impl<Tag: AnimatorTag> Plugin for AnimatorPlugin<Tag> {
           execute_animations::<Tag, ImageNode>,
           sync_animations::<Tag, ImageNode>,
         )
-          .chain(),
+          .chain()
+          .in_set(AnimationSet),
       )
       .add_message::<AnimationEvent<Tag::Event>>();
   }
 }
+
+#[derive(SystemSet, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct AnimationSet;
 
 #[derive(Clone, PartialEq, Eq, Debug, Reflect)]
 struct Frame<E: AnimationEventPayload> {
