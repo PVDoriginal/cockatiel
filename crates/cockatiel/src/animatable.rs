@@ -7,7 +7,7 @@ use bevy::{
 
 pub trait Animatable: Component<Mutability = Mutable> {
   fn get_texture_atlas_mut(&mut self) -> &mut Option<TextureAtlas>;
-  fn set_flip_x(&mut self, flip_x: bool);
+  fn set_flip(&mut self, flip_x: bool, flip_y: bool);
 }
 
 impl Animatable for ImageNode {
@@ -15,8 +15,9 @@ impl Animatable for ImageNode {
     &mut self.texture_atlas
   }
 
-  fn set_flip_x(&mut self, flip_x: bool) {
+  fn set_flip(&mut self, flip_x: bool, flip_y: bool) {
     self.flip_x = flip_x;
+    self.flip_y = flip_y;
   }
 }
 
@@ -25,7 +26,8 @@ impl Animatable for Sprite {
     &mut self.texture_atlas
   }
 
-  fn set_flip_x(&mut self, flip_x: bool) {
+  fn set_flip(&mut self, flip_x: bool, flip_y: bool) {
     self.flip_x = flip_x;
+    self.flip_y = flip_y;
   }
 }

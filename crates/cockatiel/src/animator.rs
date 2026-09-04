@@ -104,6 +104,11 @@ pub enum Animation<E: AnimationEventPayload> {
     up: FrameData<E>,
     down: FrameData<E>,
   },
+  Triangular {
+    right: FrameData<E>,
+    up_right: FrameData<E>,
+    up: FrameData<E>,
+  },
   Octagonal {
     right: FrameData<E>,
     up_right: FrameData<E>,
@@ -129,6 +134,13 @@ impl<E: AnimationEventPayload> Animation<E> {
   }
   pub fn bi_directional(up: FrameData<E>, down: FrameData<E>) -> Self {
     Self::DiagonalFlip { up, down }
+  }
+  pub fn triangular(right: FrameData<E>, up_right: FrameData<E>, up: FrameData<E>) -> Self {
+    Self::Triangular {
+      right,
+      up_right,
+      up,
+    }
   }
   #[allow(clippy::too_many_arguments)]
   pub fn octagonal(
@@ -175,6 +187,21 @@ impl<E: AnimationEventPayload> Animation<E> {
         LookDirection::UpLeft | LookDirection::UpRight => Some(up),
         LookDirection::DownLeft | LookDirection::DownRight => Some(down),
         _ => None,
+      },
+      (
+        Animation::Triangular {
+          right,
+          up_right,
+          up,
+        },
+        Some(direction),
+      ) => match direction {
+        LookDirection::Right | LookDirection::Left => Some(right),
+        LookDirection::UpRight
+        | LookDirection::UpLeft
+        | LookDirection::DownLeft
+        | LookDirection::DownRight => Some(up_right),
+        LookDirection::Up | LookDirection::Down => Some(up),
       },
       (
         Animation::Octagonal {
@@ -234,6 +261,21 @@ impl<E: AnimationEventPayload> Animation<E> {
 
         Self::DiagonalFlip { up, down }
       }
+      Self::Triangular {
+        mut right,
+        mut up_right,
+        mut up,
+      } => {
+        right.frames[index].event = Some(event.clone());
+        up_right.frames[index].event = Some(event.clone());
+        up.frames[index].event = Some(event.clone());
+
+        Self::Triangular {
+          right,
+          up_right,
+          up,
+        }
+      }
       Self::Octagonal {
         mut right,
         mut up_right,
@@ -288,12 +330,29 @@ impl<E: AnimationEventPayload> Animation<E> {
     }
   }
 
-  pub fn flip_x(&self, direction: &LookDirection) -> bool {
+  pub fn flip(&self, direction: &LookDirection) -> (bool, bool) {
     match (self, direction) {
       (Animation::DiagonalFlip { up: _, down: _ }, direction) => match direction {
-        LookDirection::UpRight | LookDirection::DownRight => false,
-        LookDirection::DownLeft | LookDirection::UpLeft => true,
-        _ => false,
+        LookDirection::UpRight | LookDirection::DownRight => (false, false),
+        LookDirection::DownLeft | LookDirection::UpLeft => (true, false),
+        _ => (false, false),
+      },
+      (
+        Animation::Triangular {
+          right: _,
+          up_right: _,
+          up: _,
+        },
+        direction,
+      ) => match direction {
+        LookDirection::Right => (false, false),
+        LookDirection::UpRight => (false, false),
+        LookDirection::Up => (false, false),
+        LookDirection::UpLeft => (true, false),
+        LookDirection::Left => (true, false),
+        LookDirection::DownLeft => (true, true),
+        LookDirection::Down => (false, true),
+        LookDirection::DownRight => (false, true),
       },
       (
         Animation::OctagonalFlip {
@@ -309,10 +368,10 @@ impl<E: AnimationEventPayload> Animation<E> {
         | LookDirection::UpRight
         | LookDirection::Up
         | LookDirection::Down
-        | LookDirection::DownRight => false,
-        LookDirection::UpLeft | LookDirection::Left | LookDirection::DownLeft => true,
+        | LookDirection::DownRight => (false, false),
+        LookDirection::UpLeft | LookDirection::Left | LookDirection::DownLeft => (true, false),
       },
-      (_, _) => false,
+      (_, _) => (false, false),
     }
   }
 }
@@ -757,7 +816,8 @@ pub fn execute_animations<Tag: AnimatorTag, Anim: Animatable>(
               if let Some(animation) = animator.get_animation();
               if let Some(look_dir) = look_dir;
               then {
-              animatable.set_flip_x(animation.flip_x(look_dir));
+              let (flip_x, flip_y) = animation.flip(look_dir);
+              animatable.set_flip(flip_x, flip_y);
             }
           }
 
@@ -812,7 +872,8 @@ pub fn sync_animations<Tag: AnimatorTag, Anim: Animatable>(
       if let Some(frame) = frame_data.frames.get(source.frame_index);
       if let Some(look_dir) = look_dir;
       then {
-        animatable.set_flip_x(animation.flip_x(look_dir));
+        let (flip_x, flip_y) = animation.flip(look_dir);
+        animatable.set_flip(flip_x, flip_y);
         if let Some(atlas) = animatable.get_texture_atlas_mut() {
             atlas.index = frame.index;
         }
