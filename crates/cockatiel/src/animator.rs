@@ -840,7 +840,7 @@ pub fn execute_animations<Tag: AnimatorTag, Anim: Animatable>(
 }
 
 #[derive(Component)]
-pub struct DerivedAnimator(Entity);
+pub struct DerivedAnimator(pub Entity);
 
 pub fn sync_animations<Tag: AnimatorTag, Anim: Animatable>(
   sources: Query<(&Animator<Tag>, Option<&LookDirection>)>,
