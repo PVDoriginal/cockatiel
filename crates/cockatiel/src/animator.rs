@@ -853,12 +853,15 @@ pub fn sync_animations<Tag: AnimatorTag, Anim: Animatable>(
 
     if_chain! {
       if let Some(animation) = source.get_animation();
+      if let Some(frame_data) = source.get_frames(look_dir);
       if let Some(look_dir) = look_dir;
       then {
         let (flip_x, flip_y) = animation.flip(look_dir);
         animatable.set_flip(flip_x, flip_y);
+
+        let frame = source.get_current_frame(&frame_data);
         if let Some(atlas) = animatable.get_texture_atlas_mut() {
-            atlas.index = source.frame_index;
+            atlas.index = frame.index;
         }
       }
     }
