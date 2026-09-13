@@ -809,17 +809,6 @@ pub fn execute_animations<Tag: AnimatorTag, Anim: Animatable>(
         if has_frame_finished && (!is_last_frame || frame_data.loops) {
           // Update sprite to match the new frame
           let frame = animator.next(&frame_data, direction);
-          atlas.index = frame.index;
-
-          // Rotate the sprite based on look direction
-          if_chain! {
-              if let Some(animation) = animator.get_animation();
-              if let Some(look_dir) = look_dir;
-              then {
-              let (flip_x, flip_y) = animation.flip(look_dir);
-              animatable.set_flip(flip_x, flip_y);
-            }
-          }
 
           // If the new frame has an associated event, send it
           if let Some(ref event) = frame.event {
@@ -833,6 +822,19 @@ pub fn execute_animations<Tag: AnimatorTag, Anim: Animatable>(
           // Start the timer for the new frame
           let duration = animator.get_frame_duration(&frame_data);
           animator.timer.restart_carry(duration);
+        }
+
+        let frame = animator.get_current_frame(&frame_data);
+        atlas.index = frame.index;
+
+        // Rotate the sprite based on look direction
+        if_chain! {
+            if let Some(animation) = animator.get_animation();
+            if let Some(look_dir) = look_dir;
+            then {
+            let (flip_x, flip_y) = animation.flip(look_dir);
+            animatable.set_flip(flip_x, flip_y);
+          }
         }
       }
     }
