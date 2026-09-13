@@ -4,7 +4,7 @@ use bevy_log::info;
 use hashbrown::HashMap;
 use if_chain::if_chain;
 use serde::{Deserialize, Serialize};
-use std::{f32::consts::PI, ops::Range, time::Duration};
+use std::{f32::consts::PI, marker::PhantomData, ops::Range, time::Duration};
 
 #[derive(Default)]
 pub struct AnimatorPlugin<Tag: AnimatorTag> {
@@ -840,42 +840,25 @@ pub fn execute_animations<Tag: AnimatorTag, Anim: Animatable>(
 }
 
 #[derive(Component)]
-pub struct DerivedAnimator<Tag: AnimatorTag> {
-  pub animations: HashMap<Tag::State, Animation<Tag::Event>>,
-  animator_target: Entity,
-}
-impl<Tag: AnimatorTag> DerivedAnimator<Tag> {
-  pub fn new(
-    animations: HashMap<Tag::State, Animation<Tag::Event>>,
-    animator_target: Entity,
-  ) -> Self {
-    Self {
-      animations,
-      animator_target,
-    }
-  }
-}
+pub struct DerivedAnimator(Entity);
 
 pub fn sync_animations<Tag: AnimatorTag, Anim: Animatable>(
   sources: Query<(&Animator<Tag>, Option<&LookDirection>)>,
-  mut targets: Query<(&mut Anim, &mut DerivedAnimator<Tag>)>,
+  mut targets: Query<(&mut Anim, &mut DerivedAnimator)>,
 ) {
   for (mut animatable, target) in &mut targets {
-    let Ok((source, look_dir)) = sources.get(target.animator_target) else {
+    let Ok((source, look_dir)) = sources.get(target.0) else {
       continue;
     };
 
-    let current_state = source.state_machine.current_state();
     if_chain! {
-      if let Some(animation) = target.animations.get(current_state);
-      if let Some(frame_data) = animation.get(look_dir);
-      if let Some(frame) = frame_data.frames.get(source.frame_index);
+      if let Some(animation) = source.get_animation();
       if let Some(look_dir) = look_dir;
       then {
         let (flip_x, flip_y) = animation.flip(look_dir);
         animatable.set_flip(flip_x, flip_y);
         if let Some(atlas) = animatable.get_texture_atlas_mut() {
-            atlas.index = frame.index;
+            atlas.index = source.frame_index;
         }
       }
     }
