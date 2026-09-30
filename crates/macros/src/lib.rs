@@ -260,6 +260,7 @@ enum Condition {
   IsTrue(Ident),
   IsFalse((Token![!], Ident)),
   And(Box<Condition>, Box<Condition>),
+  Or(Box<Condition>, Box<Condition>),
   Eq(LogicVar, LogicVar),
   Not(Box<Condition>),
   Lt(LogicVar, LogicVar),
@@ -288,6 +289,13 @@ impl Condition {
         let rhs_token = rhs.into_tokens();
         quote!(
           ::cockatiel::prelude::Condition::And(Box::new(#lhs_tokens), Box::new(#rhs_token))
+        )
+      }
+      Condition::Or(lhs, rhs) => {
+        let lhs_tokens = lhs.into_tokens();
+        let rhs_token = rhs.into_tokens();
+        quote!(
+          ::cockatiel::prelude::Condition::Or(Box::new(#lhs_tokens), Box::new(#rhs_token))
         )
       }
       Condition::Not(condition) => {
@@ -364,6 +372,21 @@ impl Parse for Condition {
         };
 
         Ok(Self::And(Box::new(lhs.clone()), Box::new(rhs.clone())))
+      }
+      "or" => {
+        let content;
+        let _ = parenthesized!(content in input);
+        let values = content.parse_terminated(Condition::parse, Token![,])?;
+        let mut iter = values.iter();
+        let Some(lhs) = iter.next() else {
+          panic!("no first argument");
+        };
+
+        let Some(rhs) = iter.next() else {
+          panic!("no second argument");
+        };
+
+        Ok(Self::Or(Box::new(lhs.clone()), Box::new(rhs.clone())))
       }
       "not" => {
         let content;
