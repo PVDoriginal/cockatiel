@@ -301,7 +301,7 @@ impl Condition {
       Condition::Not(condition) => {
         let condition = condition.into_tokens();
 
-        quote!(::cockatiel::prelude::Condition::Not(#condition))
+        quote!(::cockatiel::prelude::Condition::Not(Box::new(#condition)))
       }
       Condition::Eq(lhs, rhs) => {
         let lhs = lhs.into_tokens();
