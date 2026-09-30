@@ -53,6 +53,7 @@ pub enum Condition<Input: AnimationInput> {
   Gt(LogicVar<Input>, LogicVar<Input>),
   Gte(LogicVar<Input>, LogicVar<Input>),
   And(Box<Condition<Input>>, Box<Condition<Input>>),
+  Not(Box<Condition<Input>>),
 }
 impl<Input: AnimationInput> Condition<Input> {
   fn evaluate(&self, input: &Input) -> bool {
@@ -98,6 +99,7 @@ impl<Input: AnimationInput> Condition<Input> {
         (UInt(_), Float(_)) | (Float(_), UInt(_)) => panic!("inputs have different types"),
       },
       Condition::And(a, b) => a.evaluate(input) && b.evaluate(input),
+      Condition::Not(a) => !a.evaluate(input),
     }
   }
 }
