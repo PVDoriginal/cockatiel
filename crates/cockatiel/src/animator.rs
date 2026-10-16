@@ -730,6 +730,10 @@ impl<Tag: AnimatorTag> Animator<Tag> {
     animation.get(direction).cloned()
   }
 
+  pub fn get_state(&self) -> &Tag::State {
+    self.state_machine.current_state()
+  }
+
   pub fn shift(&mut self, shift: Tag::Shift) {
     match (&self.next_shift, shift) {
       (None, shift) => self.next_shift = Some(shift),
