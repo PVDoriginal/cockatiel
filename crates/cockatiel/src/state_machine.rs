@@ -169,8 +169,6 @@ impl<Inputs: AnimationInput, State: AnimationState, Shift: AnimationShift>
       },
     );
 
-    info!("Shifts: {:?}", transitions_from_shift);
-
     Self {
       current_state: State::enter_state(),
       transitions,
@@ -218,9 +216,12 @@ impl<Inputs: AnimationInput, State: AnimationState, Shift: AnimationShift>
       if let Some(shift) = shift;
       if let Some(transition) = self.transitions_from_shift.get(shift);
       then {
-        return Some(vec![transition.clone()]);
+        if transition.from == *state {
+          return Some(vec![transition.clone()]);
+        }
       }
     }
+
     let transitions_for_any = self
       .transitions_from_any
       .iter()
