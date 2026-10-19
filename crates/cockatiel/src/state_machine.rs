@@ -168,6 +168,9 @@ impl<Inputs: AnimationInput, State: AnimationState, Shift: AnimationShift>
         (map, anys, shifts)
       },
     );
+
+    info!("Shifts: {:?}", transitions_from_shift);
+
     Self {
       current_state: State::enter_state(),
       transitions,
