@@ -32,7 +32,9 @@ mod test {
   }
 
   #[derive(AnimationEventPayload, Event, Clone, Debug)]
-  pub enum Events {}
+  pub enum Events {
+    Poof,
+  }
 
   #[derive(AnimationShift, Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
   #[allow(dead_code)]
@@ -69,6 +71,12 @@ mod test {
           State::Hidden => hidden,
           State::Cursor => cursor,
           State::Target => target
+      }
+    }
+
+    fn entry_events() -> HashMap<Self::State, Self::Event> {
+      hashmap! {
+        State::Hidden => Events::Poof
       }
     }
   }

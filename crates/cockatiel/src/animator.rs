@@ -4,7 +4,7 @@ use bevy_log::info;
 use hashbrown::HashMap;
 use if_chain::if_chain;
 use serde::{Deserialize, Serialize};
-use std::{f32::consts::PI, marker::PhantomData, ops::Range, time::Duration};
+use std::{f32::consts::PI, ops::Range, time::Duration};
 
 #[derive(Default)]
 pub struct AnimatorPlugin<Tag: AnimatorTag> {
@@ -584,10 +584,15 @@ pub trait AnimatorTag: 'static + Send + Sync {
   type Event: AnimationEventPayload;
   type Shift: AnimationShift;
 
-  fn transitions() -> Vec<Transition<Self::State, Self::Input, Self::Shift>>;
   fn animations() -> HashMap<Self::State, impl Into<AnimationGroup<Self>>>
   where
     Self: Sized;
+
+  fn transitions() -> Vec<Transition<Self::State, Self::Input, Self::Shift>>;
+
+  fn entry_events() -> HashMap<Self::State, Self::Event> {
+    HashMap::new()
+  }
 
   fn group() -> AnimationGroup<Self>
   where
@@ -615,6 +620,7 @@ pub struct Animator<Tag: AnimatorTag> {
   next_shift: Option<Tag::Shift>,
   animations: HashMap<Tag::State, AnimationGroup<Tag>>,
   state_machine: Machine<Tag::Input, Tag::State, Tag::Shift>,
+  entry_events: HashMap<Tag::State, Tag::Event>,
 }
 
 // in the same crate as trait, you can implement trait for anything you want
@@ -629,13 +635,15 @@ impl<Tag: AnimatorTag> Default for Animator<Tag> {
       panic!("Animator must have at least one animation");
     }
     let transitions = Tag::transitions();
+    let entry_events = Tag::entry_events();
     Self {
       timer: AnimationTimer::new(0.0),
+      frame_index: 0,
+      inputs: Tag::Input::default(),
+      next_shift: None,
       animations,
       state_machine: Machine::new(transitions, Tag::log()),
-      frame_index: 0,
-      next_shift: None,
-      inputs: Tag::Input::default(),
+      entry_events,
     }
   }
 }
@@ -734,6 +742,10 @@ impl<Tag: AnimatorTag> Animator<Tag> {
     self.state_machine.current_state()
   }
 
+  pub fn get_entry_event(&self, state: &Tag::State) -> Option<&Tag::Event> {
+    self.entry_events.get(state)
+  }
+
   pub fn shift(&mut self, shift: Tag::Shift) {
     match (&self.next_shift, shift) {
       (None, shift) => self.next_shift = Some(shift),
@@ -801,9 +813,17 @@ pub fn execute_animations<Tag: AnimatorTag, Anim: Animatable>(
       if let Some(frame_data) = frame_data {
         // Animator moved into a new state
         if step_result.changed {
+          let current_state = animator.state_machine.current_state();
           if let Some(tag_name) = Tag::log() {
-            let current_state = animator.state_machine.current_state();
             info!("[{tag_name}] Animation state changed to {current_state:?} (step_result: {step_result:?}, look_dir: {look_dir:?})");
+          }
+
+          if let Some(event) = animator.get_entry_event(current_state) {
+            let animator_event = AnimationEvent {
+              entity,
+              event: event.clone(),
+            };
+            event_writer.write(animator_event);
           }
 
           animator.reset(atlas, &frame_data);
